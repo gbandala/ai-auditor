@@ -1,0 +1,19 @@
+{
+  "name": "ai-auditor",
+  "version": "1.0.0",
+  "description": "AI Readability Auditor — audita dominios y genera reporte HTML con score de legibilidad para LLMs",
+  "type": "module",
+  "bin": {
+    "ai-auditor": "./auditor.ts"
+  },
+  "scripts": {
+    "audit": "npx tsx auditor.ts",
+    "test": "npx tsx --test checks/__tests__/*.test.ts"
+  },
+  "devDependencies": {
+    "cheerio": "^1.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0",
+    "@types/node": "^22.0.0"
+  }
+}
