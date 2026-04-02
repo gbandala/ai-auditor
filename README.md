@@ -1,6 +1,59 @@
 # AI Readability Auditor
 
-Audita dominios públicos y genera un reporte HTML de legibilidad para LLMs (AI-readability).
+Analiza cualquier sitio web y genera un reporte de diagnóstico: **¿qué tan bien puede leer e interpretar este sitio una Inteligencia Artificial?**
+
+El resultado es un reporte visual con score de 0 a 100, hallazgos concretos y una lista de acciones prioritarias para mejorar.
+
+---
+
+## El contexto que lo hace relevante
+
+Hoy, cuando alguien busca un servicio usando ChatGPT, Perplexity, Google AI Overview o cualquier asistente con IA, el motor no ve el sitio web como lo ve un humano. Rastrea el código fuente, los archivos de configuración y la estructura del contenido. Si el sitio no está preparado para ser leído por IAs, **simplemente no aparece en esas respuestas**.
+
+Esto es el equivalente del SEO de los años 2000 — pero para la era de la IA. La mayoría de empresas no sabe que tiene este problema.
+
+---
+
+## Beneficios para la consultoría
+
+**Puerta de entrada a nuevos clientes**
+Se ofrece gratis como diagnóstico inicial. En 5 minutos se genera un reporte profesional que demuestra autoridad técnica sin haber firmado ningún contrato.
+
+**Diferenciación inmediata**
+Pocas consultorías ofrecen esto hoy. Posiciona a la consultoría en la conversación de "IA y visibilidad digital" antes que la competencia.
+
+**Argumento de venta tangible**
+El reporte tiene números. El cliente ve de inmediato que hay trabajo por hacer — no es una opinión, es un diagnóstico objetivo.
+
+**Upsell natural**
+El reporte entrega el *qué*. La consultoría entrega el *cómo arreglarlo*. Cada hallazgo es una conversación de ventas.
+
+---
+
+## Beneficios para los clientes
+
+| Problema que resuelve | Resultado concreto |
+|---|---|
+| Mi empresa no aparece cuando alguien le pregunta a ChatGPT sobre mi industria | Mayor visibilidad en búsquedas con IA |
+| No sé si mi sitio está bien estructurado para buscadores modernos | Diagnóstico claro con score y prioridades |
+| Invertí en SEO pero los resultados AI no me muestran | Identificación de los bloqueadores específicos |
+| No tengo presupuesto para una auditoría larga | Reporte en minutos, costo de entrada bajo |
+
+---
+
+## Dónde aplicar esta herramienta
+
+**Clientes ideales:**
+- Despachos de abogados, contadores, médicos — sectores donde ChatGPT ya está redirigiendo consultas
+- Negocios locales con competencia fuerte online (restaurantes, clínicas, inmobiliarias)
+- Startups B2B que venden a través de su sitio y necesitan ser encontradas por compradores que usan IA para investigar
+
+**Momento de uso:**
+- Primer contacto con prospecto — como "regalo" de diagnóstico
+- Cierre de propuesta — para justificar el alcance técnico del trabajo
+- Entrega de proyecto — como métrica de éxito antes/después
+
+---
 
 ## ¿Qué audita?
 
@@ -19,6 +72,8 @@ Audita dominios públicos y genera un reporte HTML de legibilidad para LLMs (AI-
 - Texto/HTML ratio (5): >15%
 - Tiempo de respuesta (3): <2000ms
 - Tamaño de página (2): <500KB
+
+---
 
 ## Instalación
 
