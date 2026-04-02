@@ -1,5 +1,7 @@
 # AI Readability Auditor
 
+![AI Readability Auditor](infografia.png)
+
 Analiza cualquier sitio web y genera un reporte de diagnóstico: **¿qué tan bien puede leer e interpretar este sitio una Inteligencia Artificial?**
 
 El resultado es un reporte visual con score de 0 a 100, hallazgos concretos y una lista de acciones prioritarias para mejorar.
