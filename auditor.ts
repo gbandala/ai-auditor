@@ -127,9 +127,9 @@ async function main() {
     : 0
   const avgPageMaxScore = pages.length > 0
     ? pages.reduce((sum, p) => sum + p.maxScore, 0) / pages.length
-    : 65
+    : 0
 
-  const globalScore = Math.round(domainScore + (avgPageScore / avgPageMaxScore) * avgPageMaxScore)
+  const globalScore = Math.round(domainScore + avgPageScore)
   const globalMaxScore = domainMaxScore + Math.round(avgPageMaxScore)
 
   const recommendations = buildRecommendations(domainChecks, pages)

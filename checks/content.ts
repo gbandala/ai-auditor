@@ -39,11 +39,13 @@ export function checkContent(html: string): CheckResult[] {
     results.push({ name: 'alt text', status: 'fail', detail: `Todas las imágenes (${totalImgs}) sin alt text`, recommendation: 'Agrega alt text descriptivo a cada imagen.', score: 0, maxScore: 7 })
   }
 
-  // Text ratio
+  // Text ratio — exclude <script> and <style> from denominator to avoid
+  // false warns on Next.js pages that embed large __NEXT_DATA__ JSON blobs
   const bodyText = $('body').text().replace(/\s+/g, ' ').trim()
-  const htmlSize = html.length
+  $('script, style').remove()
+  const strippedSize = $.html().length
   const textSize = bodyText.length
-  const ratio = htmlSize > 0 ? (textSize / htmlSize) * 100 : 0
+  const ratio = strippedSize > 0 ? (textSize / strippedSize) * 100 : 0
 
   if (ratio < 5) {
     results.push({ name: 'texto/html ratio', status: 'fail', detail: `Ratio texto/HTML muy bajo: ${ratio.toFixed(1)}% (mín 15%)`, recommendation: 'La página tiene poco texto legible comparado con el código. Agrega más contenido textual.', score: 0, maxScore: 5 })
