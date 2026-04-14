@@ -90,27 +90,127 @@ El reporte entrega el *qué*. La consultoría entrega el *cómo arreglarlo*. Cad
 
 ---
 
-## Instalación
+## Arquitectura
+
+```
+ai-auditor/
+├── auditor.ts          # CLI — entry point, orquesta checks, genera HTML
+├── reporter.ts         # Genera el reporte HTML autocontenido
+├── types.ts            # Tipos compartidos (CheckResult, PageAudit, DomainAudit)
+├── checks/             # Módulos de auditoría
+│   ├── robots.ts
+│   ├── llms.ts
+│   ├── sitemap.ts
+│   ├── meta.ts
+│   ├── content.ts
+│   ├── geo.ts
+│   ├── performance.ts
+│   └── __tests__/
+├── web/                # Interfaz web (Next.js 15)
+│   ├── app/
+│   │   ├── page.tsx              # Landing page + auditor UI
+│   │   └── api/
+│   │       ├── audit/route.ts    # SSE streaming del audit
+│   │       └── verify-email/route.ts  # Verificación de acceso
+│   ├── lib/
+│   │   ├── run-audit.ts          # Lógica de auditoría reutilizable
+│   │   ├── supabase.ts           # Cliente Supabase (server-side)
+│   │   └── checks/               # Copia de checks para el web runtime
+│   └── vercel.json               # Timeout 60s para función de audit
+└── supabase/
+    ├── setup.sql                 # Crear tabla authorized_emails
+    └── migration_audit_count.sql # Agregar columnas de conteo
+```
+
+**Score model:** `globalScore = domainScore + avgPageScore`. El porcentaje mostrado es `globalScore / globalMaxScore * 100`.
+
+**Acceso controlado:** Los usuarios se verifican contra una tabla `authorized_emails` en Supabase. Cada email tiene un límite de auditorías (`max_audits`, default 5). El contador solo puede resetearse directamente en la tabla.
+
+---
+
+## Instalación (CLI)
 
 ```bash
 npm install
 ```
 
-## Uso
+### Uso CLI
 
 ```bash
 # Auditar un dominio
-npx tsx auditor.ts https://ejemplo.com
+npm run audit -- https://ejemplo.com
 
 # Limitar páginas auditadas
-npx tsx auditor.ts https://ejemplo.com --pages 5
+npm run audit -- https://ejemplo.com --pages 5
 
 # Sitios con SSL inválido o autofirmado
-npx tsx auditor.ts https://sitio.com --no-verify
+npm run audit -- https://sitio.com --no-verify
 ```
 
 Genera `audit-report-<dominio>-<fecha>.html` en el directorio actual.  
-Abre en Chrome → `Cmd+P` → Guardar como PDF.
+Abre en Chrome → `Ctrl+P` → Guardar como PDF.
+
+---
+
+## Interfaz Web (Next.js)
+
+### Desarrollo local
+
+```bash
+cd web
+npm install
+cp .env.local.example .env.local   # completar con tus credenciales
+npm run dev                         # http://localhost:3000
+```
+
+### Variables de entorno requeridas
+
+```env
+SUPABASE_URL=https://<project-ref>.supabase.co
+SUPABASE_SERVICE_KEY=<service_role_key>
+```
+
+### Setup de Supabase
+
+1. Crear proyecto en [supabase.com](https://supabase.com)
+2. Ejecutar en **SQL Editor**:
+
+```sql
+CREATE TABLE authorized_emails (
+  email       text        PRIMARY KEY,
+  name        text,
+  audit_count integer     DEFAULT 0,
+  max_audits  integer     DEFAULT 5,
+  created_at  timestamptz DEFAULT now()
+);
+```
+
+3. Agregar usuarios autorizados:
+
+```sql
+INSERT INTO authorized_emails (email, name) VALUES ('usuario@empresa.com', 'Nombre');
+```
+
+4. Resetear contador de un usuario:
+
+```sql
+UPDATE authorized_emails SET audit_count = 0 WHERE email = 'usuario@empresa.com';
+```
+
+---
+
+## Deploy en Vercel
+
+1. Importar repo en [vercel.com/new](https://vercel.com/new)
+2. Configurar **Root Directory → `web`**
+3. Agregar variables de entorno:
+   - `SUPABASE_URL`
+   - `SUPABASE_SERVICE_KEY`
+4. Deploy
+
+El `web/vercel.json` ya configura un timeout de 60s para la función de auditoría.
+
+---
 
 ## Tests
 
