@@ -732,6 +732,17 @@ export default function Home() {
               {remaining === 1 ? 'auditoría' : 'auditorías'} restante{remaining !== 1 ? 's' : ''}
             </span>
           </div>
+          <button
+            onClick={() => { localStorage.removeItem(STORAGE_KEY); setVerified(false); setVerifiedEmail(''); reset(); }}
+            title="Cerrar sesión"
+            style={{
+              background: 'transparent', border: '1px solid #374151', borderRadius: 20,
+              padding: '5px 12px', color: '#9ca3af', fontSize: 12, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: 5,
+            }}
+          >
+            <span>↩</span> Salir
+          </button>
         </div>
         <div style={{ maxWidth: 720, margin: '0 auto', textAlign: 'center' }}>
           <div style={{ fontSize: 12, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '.12em', marginBottom: 10 }}>
