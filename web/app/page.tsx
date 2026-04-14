@@ -561,7 +561,7 @@ function EmailGate({ onVerified }: { onVerified: (email: string, remaining: numb
         </h1>
         <p style={{ fontSize: 14, color: '#9ca3af', margin: '0 0 36px', lineHeight: 1.6 }}>
           Herramienta de acceso restringido.<br />
-          Ingresa tu correo para verificar tu acceso.
+          Ingresa tu usuario para verificar tu acceso.
         </p>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -569,7 +569,7 @@ function EmailGate({ onVerified }: { onVerified: (email: string, remaining: numb
             type="email"
             value={email}
             onChange={e => { setEmail(e.target.value); setStatus('idle') }}
-            placeholder="tu@correo.com"
+            placeholder="tu@usuario.com"
             required
             disabled={status === 'checking'}
             style={{
@@ -594,7 +594,7 @@ function EmailGate({ onVerified }: { onVerified: (email: string, remaining: numb
 
         {status === 'denied' && (
           <div style={{ marginTop: 16, padding: '12px 16px', background: '#1f2937', borderRadius: 8, border: '1px solid #7f1d1d' }}>
-            <div style={{ fontSize: 14, color: '#f87171' }}>Este correo no tiene acceso autorizado.</div>
+            <div style={{ fontSize: 14, color: '#f87171' }}>Este usuario no tiene acceso autorizado.</div>
             <div style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>Contacta al administrador para solicitar acceso.</div>
           </div>
         )}
