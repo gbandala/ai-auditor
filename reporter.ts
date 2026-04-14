@@ -158,7 +158,7 @@ export function generateHtml(audit: DomainAudit): string {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI Readability Audit — ${audit.domain}</title>
+  <title>AI Readability Audit — ${esc(audit.domain)}</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f9fafb; color: #111827; }
@@ -178,7 +178,7 @@ export function generateHtml(audit: DomainAudit): string {
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px">
       <div>
         <div style="font-size:12px;color:#9ca3af;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">AI Readability Audit</div>
-        <div style="font-size:28px;font-weight:700">${audit.domain}</div>
+        <div style="font-size:28px;font-weight:700">${esc(audit.domain)}</div>
         <div style="font-size:13px;color:#9ca3af;margin-top:4px">${audit.date} · ${audit.pages.length} página(s) auditada(s)</div>
       </div>
       <div style="text-align:center">

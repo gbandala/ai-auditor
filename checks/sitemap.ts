@@ -35,7 +35,13 @@ export async function checkSitemap(baseUrl: string, maxPages: number, fetcher: F
     }
   }
 
-  const entries = parseUrls(xml)
+  const baseDomain = new URL(baseUrl).hostname
+  const allEntries = parseUrls(xml)
+  // Only keep URLs that belong to the same domain to prevent SSRF via malicious sitemaps
+  const entries = allEntries.filter(e => {
+    try { return new URL(e.url).hostname === baseDomain } catch { return false }
+  })
+
   if (entries.length === 0) {
     return {
       check: { name: 'sitemap.xml', status: 'warn', detail: 'Existe pero sin URLs válidas (<loc>)', recommendation: 'Agrega entradas <url><loc>...</loc></url> al sitemap.', score: 5, maxScore: 10 },
