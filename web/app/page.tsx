@@ -461,13 +461,14 @@ function WhatYouGet() {
   )
 }
 
-function CtaBanner({ onSubmit, url, setUrl, maxPages, setMaxPages, running }: {
+function CtaBanner({ onSubmit, url, setUrl, maxPages, setMaxPages, running, disabled }: {
   onSubmit: (e: React.FormEvent) => void
   url: string
   setUrl: (v: string) => void
   maxPages: number
   setMaxPages: (v: number) => void
   running: boolean
+  disabled?: boolean
 }) {
   return (
     <div style={{ background: '#111827', borderRadius: 16, padding: '40px 32px', marginBottom: 48, textAlign: 'center' }}>
@@ -504,11 +505,12 @@ function CtaBanner({ onSubmit, url, setUrl, maxPages, setMaxPages, running }: {
         </select>
         <button
           type="submit"
-          disabled={running}
+          disabled={running || disabled}
           style={{
             padding: '12px 28px', borderRadius: 8, border: 'none',
-            background: '#2563eb', color: 'white', fontSize: 15, fontWeight: 700,
-            cursor: running ? 'not-allowed' : 'pointer',
+            background: running || disabled ? '#374151' : '#2563eb',
+            color: 'white', fontSize: 15, fontWeight: 700,
+            cursor: running || disabled ? 'not-allowed' : 'pointer',
           }}
         >
           Auditar →
@@ -522,7 +524,7 @@ function CtaBanner({ onSubmit, url, setUrl, maxPages, setMaxPages, running }: {
 
 const STORAGE_KEY = 'auditor_verified_email'
 
-function EmailGate({ onVerified }: { onVerified: (email: string) => void }) {
+function EmailGate({ onVerified }: { onVerified: (email: string, remaining: number) => void }) {
   const [email, setEmail] = useState('')
   const [status, setStatus] = useState<'idle' | 'checking' | 'denied' | 'error'>('idle')
 
@@ -537,8 +539,9 @@ function EmailGate({ onVerified }: { onVerified: (email: string) => void }) {
       })
       const data = await res.json()
       if (data.authorized) {
-        localStorage.setItem(STORAGE_KEY, email.trim().toLowerCase())
-        onVerified(email.trim().toLowerCase())
+        const verified = email.trim().toLowerCase()
+        localStorage.setItem(STORAGE_KEY, verified)
+        onVerified(verified, data.remaining ?? 0)
       } else {
         setStatus('denied')
       }
@@ -610,11 +613,34 @@ function EmailGate({ onVerified }: { onVerified: (email: string) => void }) {
 type AppState = 'idle' | 'running' | 'done' | 'error'
 
 export default function Home() {
-  const [verified, setVerified] = useState<boolean | null>(null) // null = loading
+  const [verified, setVerified] = useState<boolean | null>(null)
+  const [verifiedEmail, setVerifiedEmail] = useState('')
+  const [remaining, setRemaining] = useState(0)
 
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY)
-    setVerified(!!saved)
+    if (saved) {
+      setVerifiedEmail(saved)
+      // Re-verify against Supabase to get current remaining count
+      fetch('/api/verify-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: saved }),
+      })
+        .then(r => r.json())
+        .then(data => {
+          if (data.authorized) {
+            setRemaining(data.remaining ?? 0)
+            setVerified(true)
+          } else {
+            localStorage.removeItem(STORAGE_KEY)
+            setVerified(false)
+          }
+        })
+        .catch(() => setVerified(true)) // on network error, allow cached access
+    } else {
+      setVerified(false)
+    }
   }, [])
 
   const [url, setUrl] = useState('')
@@ -625,8 +651,8 @@ export default function Home() {
   const [errorMsg, setErrorMsg] = useState('')
   const abortRef = useRef<AbortController | null>(null)
 
-  if (verified === null) return null // evita flash durante hydration
-  if (!verified) return <EmailGate onVerified={() => setVerified(true)} />
+  if (verified === null) return null
+  if (!verified) return <EmailGate onVerified={(email, rem) => { setVerifiedEmail(email); setRemaining(rem); setVerified(true) }} />
 
   async function startAudit(e: React.FormEvent) {
     e.preventDefault()
@@ -642,7 +668,7 @@ export default function Home() {
       const res = await fetch('/api/audit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: url.trim(), maxPages }),
+        body: JSON.stringify({ url: url.trim(), maxPages, email: verifiedEmail }),
         signal: abortRef.current.signal,
       })
 
@@ -666,6 +692,7 @@ export default function Home() {
           const event = JSON.parse(line.slice(6))
           if (event.type === 'done') {
             setAudit(event.audit)
+            setRemaining(event.remaining ?? 0)
             setAppState('done')
           } else if (event.type === 'error') {
             throw new Error(event.message)
@@ -731,20 +758,26 @@ export default function Home() {
             </select>
             <button
               type="submit"
-              disabled={appState === 'running'}
+              disabled={appState === 'running' || remaining === 0}
               style={{
                 padding: '12px 28px', borderRadius: 8, border: 'none',
-                background: appState === 'running' ? '#374151' : '#2563eb',
-                color: 'white', fontSize: 15, fontWeight: 700, cursor: appState === 'running' ? 'not-allowed' : 'pointer',
+                background: appState === 'running' || remaining === 0 ? '#374151' : '#2563eb',
+                color: 'white', fontSize: 15, fontWeight: 700,
+                cursor: appState === 'running' || remaining === 0 ? 'not-allowed' : 'pointer',
                 transition: 'background .2s',
               }}
             >
               {appState === 'running' ? 'Analizando…' : 'Auditar →'}
             </button>
           </form>
-          {appState === 'idle' && (
+          {appState === 'idle' && remaining === 0 && (
+            <div style={{ marginTop: 16, padding: '10px 16px', background: '#1f2937', borderRadius: 8, border: '1px solid #7f1d1d', display: 'inline-block' }}>
+              <span style={{ fontSize: 13, color: '#f87171' }}>Has alcanzado el límite de auditorías. Contacta al administrador para continuar.</span>
+            </div>
+          )}
+          {appState === 'idle' && remaining > 0 && (
             <div style={{ marginTop: 16, fontSize: 12, color: '#4b5563' }}>
-              Sin registro · Sin tarjeta · Resultado en ~30 segundos
+              {remaining} auditoría{remaining !== 1 ? 's' : ''} disponible{remaining !== 1 ? 's' : ''}
             </div>
           )}
         </div>
@@ -765,6 +798,7 @@ export default function Home() {
               maxPages={maxPages}
               setMaxPages={setMaxPages}
               running={false}
+              disabled={remaining === 0}
             />
           </>
         )}

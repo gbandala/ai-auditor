@@ -16,7 +16,7 @@ export async function POST(req: Request) {
 
   const { data, error } = await supabase
     .from('authorized_emails')
-    .select('email, name')
+    .select('email, name, audit_count, max_audits')
     .eq('email', email)
     .maybeSingle()
 
@@ -25,5 +25,15 @@ export async function POST(req: Request) {
     return Response.json({ error: 'Error interno' }, { status: 500 })
   }
 
-  return Response.json({ authorized: !!data, name: data?.name ?? null })
+  if (!data) {
+    return Response.json({ authorized: false })
+  }
+
+  const remaining = Math.max(0, (data.max_audits ?? 5) - (data.audit_count ?? 0))
+
+  return Response.json({
+    authorized: true,
+    name: data.name ?? null,
+    remaining,
+  })
 }
