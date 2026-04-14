@@ -52,5 +52,34 @@ export function checkMeta(html: string): CheckResult[] {
     }
   }
 
+  // Schema.org @type validation (GEO-relevant types)
+  const GEO_TYPES = ['Article', 'FAQPage', 'Organization', 'Product', 'HowTo', 'BreadcrumbList', 'WebSite', 'WebPage', 'LocalBusiness', 'BlogPosting']
+  const allJsonldScripts = $('script[type="application/ld+json"]')
+  const foundTypes: string[] = []
+
+  allJsonldScripts.each((_i, el) => {
+    try {
+      const parsed = JSON.parse($(el).html() ?? '')
+      const nodes = Array.isArray(parsed['@graph']) ? parsed['@graph'] : [parsed]
+      for (const node of nodes) {
+        if (node['@type']) {
+          const types = Array.isArray(node['@type']) ? node['@type'] : [node['@type']]
+          foundTypes.push(...types)
+        }
+      }
+    } catch { /* invalid JSON already caught by json-ld check */ }
+  })
+
+  if (foundTypes.length === 0) {
+    results.push({ name: 'schema types', status: 'fail', detail: 'Sin JSON-LD o sin @type declarado', recommendation: 'Declara @type en tu JSON-LD. Para GEO usa: Article, FAQPage, Organization, Product, HowTo, WebSite.', score: 0, maxScore: 8 })
+  } else {
+    const geoMatches = foundTypes.filter(t => GEO_TYPES.includes(t))
+    if (geoMatches.length === 0) {
+      results.push({ name: 'schema types', status: 'warn', detail: `@type encontrado (${foundTypes.join(', ')}) pero ninguno es tipo GEO relevante`, recommendation: `Usa al menos uno de: ${GEO_TYPES.slice(0, 6).join(', ')}. Los LLMs priorizan estos tipos para citar contenido.`, score: 3, maxScore: 8 })
+    } else {
+      results.push({ name: 'schema types', status: 'pass', detail: `Tipos GEO válidos: ${geoMatches.join(', ')}`, score: 8, maxScore: 8 })
+    }
+  }
+
   return results
 }

@@ -15,12 +15,46 @@ const noMetaHtml = `<!DOCTYPE html><html><head>
   <title>A Very Long Title That Exceeds The Recommended Sixty Character Limit For SEO</title>
 </head><body></body></html>`
 
+const geoSchemaHtml = `<!DOCTYPE html><html><head>
+  <title>Guia</title>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","name":"Test"}</script>
+</head><body></body></html>`
+
+const nonGeoSchemaHtml = `<!DOCTYPE html><html><head>
+  <title>App</title>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Test"}</script>
+</head><body></body></html>`
+
+const graphSchemaHtml = `<!DOCTYPE html><html><head>
+  <title>Org</title>
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization"},{"@type":"WebSite"}]}</script>
+</head><body></body></html>`
+
 describe('checkMeta', () => {
   it('returns all pass for complete meta tags', () => {
     const results = checkMeta(fullHtml)
-    assert.equal(results.length, 4)
+    assert.equal(results.length, 5)
     assert.ok(results.every(r => r.status === 'pass'), `Expected all pass but got: ${JSON.stringify(results.map(r => ({ name: r.name, status: r.status })))}`)
-    assert.equal(results.reduce((sum, r) => sum + r.score, 0), 38)
+    assert.equal(results.reduce((sum, r) => sum + r.score, 0), 46)
+  })
+
+  it('detects GEO-relevant @type in JSON-LD', () => {
+    const results = checkMeta(geoSchemaHtml)
+    const schemaTypes = results.find(r => r.name === 'schema types')
+    assert.equal(schemaTypes?.status, 'pass')
+    assert.equal(schemaTypes?.score, 8)
+  })
+
+  it('warns for non-GEO @type', () => {
+    const results = checkMeta(nonGeoSchemaHtml)
+    const schemaTypes = results.find(r => r.name === 'schema types')
+    assert.equal(schemaTypes?.status, 'warn')
+  })
+
+  it('detects @type in @graph array', () => {
+    const results = checkMeta(graphSchemaHtml)
+    const schemaTypes = results.find(r => r.name === 'schema types')
+    assert.equal(schemaTypes?.status, 'pass')
   })
 
   it('returns fail for missing description, OG, JSON-LD; warn for long title', () => {

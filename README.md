@@ -64,16 +64,29 @@ El reporte entrega el *qué*. La consultoría entrega el *cómo arreglarlo*. Cad
 - `llms.txt` (15): existe, tiene `# título` + `## secciones` + links https://
 - `sitemap.xml` (10): existe, URLs con `<lastmod>`
 
-**Nivel página, promediado (65 pts)**
+**Nivel página, promediado (~102 pts)**
+
+*Meta (38 pts)*
 - `<title>` (8): presente, <60 chars
 - `<meta description>` (8): presente, <160 chars
 - Open Graph (10): og:title + og:description + og:image
 - JSON-LD (12): presente y válido
+
+*Contenido (27 pts)*
 - Headings (10): 1 h1, jerarquía h1→h2→h3 sin saltos
 - Alt text (7): todas las imágenes con alt
+- HTML semántico (5): landmarks `<main>`, `<article>`, `<nav>`, `<section>`
 - Texto/HTML ratio (5): >15%
+
+*Performance (5 pts)*
 - Tiempo de respuesta (3): <2000ms
 - Tamaño de página (2): <500KB
+
+*GEO — Generative Engine Optimization (32 pts)*
+- Contenido citable (8): estadísticas, porcentajes, años, fuentes entre paréntesis, cifras con contexto
+- Q&A density (8): headings interrogativos (`¿Cómo...?`, `What is...?`), `<details>`/`<summary>`, schema FAQPage
+- E-E-A-T (10): links a fuentes autoritativas (.gov, .edu, Wikipedia), autoría explícita, fecha de publicación
+- Densidad semántica (6): coherencia Jaccard entre términos del H1 y el cuerpo del texto
 
 ---
 
@@ -105,4 +118,4 @@ Abre en Chrome → `Cmd+P` → Guardar como PDF.
 npm test
 ```
 
-21 tests unitarios cubriendo los 6 módulos de checks.
+36 tests unitarios cubriendo los 7 módulos de checks.

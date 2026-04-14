@@ -1,6 +1,6 @@
 import type { CheckResult, Fetcher } from '../types.ts'
 
-const AI_BOTS = ['GPTBot', 'Claude-Web', 'anthropic-ai', 'Bard', 'PerplexityBot', 'CCBot']
+const AI_BOTS = ['GPTBot', 'Claude-Web', 'ClaudeBot', 'anthropic-ai', 'Bard', 'PerplexityBot', 'CCBot']
 
 function blocksAIBots(text: string): boolean {
   // robots.txt groups rules by blank lines

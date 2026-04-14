@@ -47,6 +47,20 @@ export function checkContent(html: string): CheckResult[] {
   const textSize = bodyText.length
   const ratio = strippedSize > 0 ? (textSize / strippedSize) * 100 : 0
 
+  // Semantic HTML landmarks
+  const LANDMARKS = ['main', 'article', 'nav', 'header', 'section', 'aside', 'footer'] as const
+  const foundLandmarks = LANDMARKS.filter(tag => $(tag).length > 0)
+  const hasMain = $('main').length > 0
+  const hasArticle = $('article').length > 0
+
+  if (foundLandmarks.length === 0) {
+    results.push({ name: 'semantic html', status: 'fail', detail: 'Sin landmarks semánticos (main, article, nav, header, section)', recommendation: 'Usa elementos HTML5 semánticos: <main> para el contenido principal, <article> para contenido citable, <nav> para navegación.', score: 0, maxScore: 5 })
+  } else if (!hasMain && !hasArticle) {
+    results.push({ name: 'semantic html', status: 'warn', detail: `Landmarks presentes (${foundLandmarks.join(', ')}) pero sin <main> ni <article>`, recommendation: 'Agrega <main> alrededor del contenido principal y <article> en contenido citable — los LLMs usan estos para delimitar texto citeable.', score: 2, maxScore: 5 })
+  } else {
+    results.push({ name: 'semantic html', status: 'pass', detail: `Landmarks semánticos: ${foundLandmarks.join(', ')}`, score: 5, maxScore: 5 })
+  }
+
   if (ratio < 5) {
     results.push({ name: 'texto/html ratio', status: 'fail', detail: `Ratio texto/HTML muy bajo: ${ratio.toFixed(1)}% (mín 15%)`, recommendation: 'La página tiene poco texto legible comparado con el código. Agrega más contenido textual.', score: 0, maxScore: 5 })
   } else if (ratio < 15) {

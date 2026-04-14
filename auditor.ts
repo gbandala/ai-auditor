@@ -5,6 +5,7 @@ import { checkSitemap } from './checks/sitemap.ts'
 import { checkMeta } from './checks/meta.ts'
 import { checkContent } from './checks/content.ts'
 import { checkPerformance } from './checks/performance.ts'
+import { checkGeo } from './checks/geo.ts'
 import { generateHtml } from './reporter.ts'
 import type { DomainAudit, PageAudit, RecommendationItem, CheckResult } from './types.ts'
 
@@ -109,7 +110,8 @@ async function main() {
     const contentChecks = checkContent(html)
     const { responseTime, checks: perfChecks } = await checkPerformance(url)
 
-    const allChecks = [...metaChecks, ...contentChecks, ...perfChecks]
+    const geoChecks = checkGeo(html)
+    const allChecks = [...metaChecks, ...contentChecks, ...perfChecks, ...geoChecks]
     const score = allChecks.reduce((sum, c) => sum + c.score, 0)
     const maxScore = allChecks.reduce((sum, c) => sum + c.maxScore, 0)
 

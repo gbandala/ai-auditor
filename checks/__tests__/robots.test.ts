@@ -39,4 +39,11 @@ describe('checkRobots', () => {
     assert.equal(result.status, 'warn')
     assert.equal(result.score, 5)
   })
+
+  it('returns warn when robots.txt blocks ClaudeBot specifically', async () => {
+    const body = 'User-agent: *\nAllow: /\n\nUser-agent: ClaudeBot\nDisallow: /'
+    const result = await checkRobots('https://example.com', makeFetcher(200, body))
+    assert.equal(result.status, 'warn')
+    assert.equal(result.score, 5)
+  })
 })
