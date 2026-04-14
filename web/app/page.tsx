@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import type { DomainAudit, CheckResult, PageAudit, RecommendationItem } from '@/lib/types'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -368,11 +368,255 @@ function ResultsPanel({ audit, onReset }: { audit: DomainAudit; onReset: () => v
   )
 }
 
+// ── Landing sections (idle only) ─────────────────────────────────────────────
+
+function WhyItMatters() {
+  const stats = [
+    {
+      icon: '🤖',
+      title: 'La IA reemplaza al buscador',
+      body: 'ChatGPT, Perplexity y Google AI Overviews responden directamente sin enviar tráfico. Solo citan sitios que entienden.',
+    },
+    {
+      icon: '📉',
+      title: 'El SEO tradicional ya no es suficiente',
+      body: 'Un sitio puede tener PageRank perfecto y ser invisible para los LLMs si no tiene estructura semántica legible por IA.',
+    },
+    {
+      icon: '🏆',
+      title: 'GEO: el nuevo estándar',
+      body: 'Generative Engine Optimization es la práctica de estructurar tu sitio para que los modelos de IA lo entiendan, citen y recomienden.',
+    },
+  ]
+  return (
+    <div style={{ marginBottom: 48 }}>
+      <div style={{ textAlign: 'center', marginBottom: 28 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: '#2563eb', textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: 6 }}>Por qué importa ahora</div>
+        <h2 style={{ fontSize: 24, fontWeight: 800, color: '#111827', margin: 0 }}>El tráfico web está cambiando</h2>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 16 }}>
+        {stats.map(s => (
+          <div key={s.title} style={{ background: 'white', borderRadius: 12, border: '1px solid #e5e7eb', padding: 24 }}>
+            <div style={{ fontSize: 32, marginBottom: 12 }}>{s.icon}</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#111827', marginBottom: 8 }}>{s.title}</div>
+            <div style={{ fontSize: 14, color: '#6b7280', lineHeight: 1.6 }}>{s.body}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function HowItWorks() {
+  const steps = [
+    { n: '1', title: 'Ingresas tu URL', body: 'Pega la dirección de tu sitio y elige cuántas páginas analizar (1 a 20). Sin registro, sin instalación.' },
+    { n: '2', title: 'Analizamos 17 señales', body: 'Revisamos robots.txt, llms.txt, sitemap, metadatos, estructura semántica, schema.org, rendimiento y más.' },
+    { n: '3', title: 'Recibes tu plan de acción', body: 'Un reporte priorizado con errores críticos, advertencias y acciones concretas ordenadas por impacto en IA.' },
+  ]
+  return (
+    <div style={{ marginBottom: 48 }}>
+      <div style={{ textAlign: 'center', marginBottom: 28 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: '#2563eb', textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: 6 }}>Cómo funciona</div>
+        <h2 style={{ fontSize: 24, fontWeight: 800, color: '#111827', margin: 0 }}>Análisis completo en 30 segundos</h2>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 0, background: 'white', borderRadius: 12, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+        {steps.map((s, i) => (
+          <div key={s.n} style={{ padding: 28, borderRight: i < steps.length - 1 ? '1px solid #f3f4f6' : 'none', position: 'relative' }}>
+            <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#eff6ff', border: '2px solid #bfdbfe', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 800, color: '#2563eb', marginBottom: 16 }}>{s.n}</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#111827', marginBottom: 8 }}>{s.title}</div>
+            <div style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.6 }}>{s.body}</div>
+            {i < steps.length - 1 && (
+              <div style={{ position: 'absolute', right: -12, top: '50%', transform: 'translateY(-50%)', fontSize: 18, color: '#d1d5db', zIndex: 1 }}>→</div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function WhatYouGet() {
+  const items = [
+    { icon: '🎯', title: 'Score global /100', body: 'Una puntuación única que resume la visibilidad de tu sitio para la IA, comparable entre auditorías.' },
+    { icon: '📋', title: 'Plan de acción priorizado', body: 'Errores críticos primero, advertencias después. Cada ítem incluye el impacto en negocio y la acción exacta a tomar.' },
+    { icon: '🔍', title: 'Análisis por página', body: 'Desglose detallado de cada URL auditada: qué pasó, qué falló y la recomendación específica.' },
+    { icon: '📄', title: 'Reporte exportable a PDF', body: 'Imprime o guarda el reporte completo con Ctrl+P. Compártelo con tu equipo o agencia.' },
+  ]
+  return (
+    <div style={{ marginBottom: 48 }}>
+      <div style={{ textAlign: 'center', marginBottom: 28 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: '#2563eb', textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: 6 }}>Qué obtienes</div>
+        <h2 style={{ fontSize: 24, fontWeight: 800, color: '#111827', margin: 0 }}>Un reporte accionable, no solo métricas</h2>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+        {items.map(item => (
+          <div key={item.title} style={{ background: 'white', borderRadius: 12, border: '1px solid #e5e7eb', padding: 20, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ fontSize: 28 }}>{item.icon}</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#111827' }}>{item.title}</div>
+            <div style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.6 }}>{item.body}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function CtaBanner({ onSubmit, url, setUrl, maxPages, setMaxPages, running }: {
+  onSubmit: (e: React.FormEvent) => void
+  url: string
+  setUrl: (v: string) => void
+  maxPages: number
+  setMaxPages: (v: number) => void
+  running: boolean
+}) {
+  return (
+    <div style={{ background: '#111827', borderRadius: 16, padding: '40px 32px', marginBottom: 48, textAlign: 'center' }}>
+      <div style={{ fontSize: 22, fontWeight: 800, color: 'white', marginBottom: 8 }}>
+        Audita tu sitio ahora — gratis
+      </div>
+      <div style={{ fontSize: 14, color: '#9ca3af', marginBottom: 28 }}>
+        Sin registro. Sin tarjeta. Resultado en 30 segundos.
+      </div>
+      <form onSubmit={onSubmit} style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
+        <input
+          type="url"
+          value={url}
+          onChange={e => setUrl(e.target.value)}
+          placeholder="https://tuempresa.com"
+          required
+          disabled={running}
+          style={{
+            flex: '1 1 300px', maxWidth: 400, padding: '12px 16px', borderRadius: 8,
+            border: '1px solid #374151', background: '#1f2937', color: 'white',
+            fontSize: 15, outline: 'none',
+          }}
+        />
+        <select
+          value={maxPages}
+          onChange={e => setMaxPages(Number(e.target.value))}
+          disabled={running}
+          style={{
+            padding: '12px 14px', borderRadius: 8, border: '1px solid #374151',
+            background: '#1f2937', color: '#9ca3af', fontSize: 14, cursor: 'pointer',
+          }}
+        >
+          {[1, 3, 5, 10, 20].map(n => <option key={n} value={n}>{n} página{n > 1 ? 's' : ''}</option>)}
+        </select>
+        <button
+          type="submit"
+          disabled={running}
+          style={{
+            padding: '12px 28px', borderRadius: 8, border: 'none',
+            background: '#2563eb', color: 'white', fontSize: 15, fontWeight: 700,
+            cursor: running ? 'not-allowed' : 'pointer',
+          }}
+        >
+          Auditar →
+        </button>
+      </form>
+    </div>
+  )
+}
+
+// ── Email Gate ────────────────────────────────────────────────────────────────
+
+const STORAGE_KEY = 'auditor_verified_email'
+
+function EmailGate({ onVerified }: { onVerified: (email: string) => void }) {
+  const [email, setEmail] = useState('')
+  const [status, setStatus] = useState<'idle' | 'checking' | 'denied' | 'error'>('idle')
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setStatus('checking')
+    try {
+      const res = await fetch('/api/verify-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim() }),
+      })
+      const data = await res.json()
+      if (data.authorized) {
+        localStorage.setItem(STORAGE_KEY, email.trim().toLowerCase())
+        onVerified(email.trim().toLowerCase())
+      } else {
+        setStatus('denied')
+      }
+    } catch {
+      setStatus('error')
+    }
+  }
+
+  return (
+    <div style={{ minHeight: '100vh', background: '#111827', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+      <div style={{ width: '100%', maxWidth: 420, textAlign: 'center' }}>
+        <div style={{ fontSize: 12, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '.12em', marginBottom: 12 }}>
+          GEO · Generative Engine Optimization
+        </div>
+        <h1 style={{ fontSize: 28, fontWeight: 800, color: 'white', margin: '0 0 10px', lineHeight: 1.2 }}>
+          AI Readability Auditor
+        </h1>
+        <p style={{ fontSize: 14, color: '#9ca3af', margin: '0 0 36px', lineHeight: 1.6 }}>
+          Herramienta de acceso restringido.<br />
+          Ingresa tu correo para verificar tu acceso.
+        </p>
+
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <input
+            type="email"
+            value={email}
+            onChange={e => { setEmail(e.target.value); setStatus('idle') }}
+            placeholder="tu@correo.com"
+            required
+            disabled={status === 'checking'}
+            style={{
+              padding: '13px 16px', borderRadius: 8, border: '1px solid #374151',
+              background: '#1f2937', color: 'white', fontSize: 15, outline: 'none',
+              textAlign: 'center',
+            }}
+          />
+          <button
+            type="submit"
+            disabled={status === 'checking'}
+            style={{
+              padding: '13px', borderRadius: 8, border: 'none',
+              background: status === 'checking' ? '#374151' : '#2563eb',
+              color: 'white', fontSize: 15, fontWeight: 700,
+              cursor: status === 'checking' ? 'not-allowed' : 'pointer',
+            }}
+          >
+            {status === 'checking' ? 'Verificando…' : 'Acceder →'}
+          </button>
+        </form>
+
+        {status === 'denied' && (
+          <div style={{ marginTop: 16, padding: '12px 16px', background: '#1f2937', borderRadius: 8, border: '1px solid #7f1d1d' }}>
+            <div style={{ fontSize: 14, color: '#f87171' }}>Este correo no tiene acceso autorizado.</div>
+            <div style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>Contacta al administrador para solicitar acceso.</div>
+          </div>
+        )}
+        {status === 'error' && (
+          <div style={{ marginTop: 16, fontSize: 13, color: '#f87171' }}>
+            Error de conexión — intenta de nuevo.
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 type AppState = 'idle' | 'running' | 'done' | 'error'
 
 export default function Home() {
+  const [verified, setVerified] = useState<boolean | null>(null) // null = loading
+
+  useEffect(() => {
+    const saved = localStorage.getItem(STORAGE_KEY)
+    setVerified(!!saved)
+  }, [])
+
   const [url, setUrl] = useState('')
   const [maxPages, setMaxPages] = useState(10)
   const [appState, setAppState] = useState<AppState>('idle')
@@ -380,6 +624,9 @@ export default function Home() {
   const [audit, setAudit] = useState<DomainAudit | null>(null)
   const [errorMsg, setErrorMsg] = useState('')
   const abortRef = useRef<AbortController | null>(null)
+
+  if (verified === null) return null // evita flash durante hydration
+  if (!verified) return <EmailGate onVerified={() => setVerified(true)} />
 
   async function startAudit(e: React.FormEvent) {
     e.preventDefault()
@@ -442,16 +689,18 @@ export default function Home() {
   }
 
   return (
-    <div style={{ minHeight: '100vh' }}>
+    <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
       {/* Header */}
-      <div style={{ background: '#111827', color: 'white', padding: '40px 16px 32px' }}>
+      <div style={{ background: '#111827', color: 'white', padding: appState === 'idle' ? '60px 16px 48px' : '40px 16px 32px' }}>
         <div style={{ maxWidth: 720, margin: '0 auto', textAlign: 'center' }}>
-          <div style={{ fontSize: 12, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: 8 }}>ai-auditor</div>
-          <h1 style={{ fontSize: 32, fontWeight: 800, margin: '0 0 12px', lineHeight: 1.2 }}>
+          <div style={{ fontSize: 12, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '.12em', marginBottom: 10 }}>
+            GEO · Generative Engine Optimization
+          </div>
+          <h1 style={{ fontSize: appState === 'idle' ? 40 : 32, fontWeight: 800, margin: '0 0 14px', lineHeight: 1.15 }}>
             ¿Tu sitio es visible para la IA?
           </h1>
-          <p style={{ fontSize: 16, color: '#9ca3af', margin: '0 0 32px', lineHeight: 1.5 }}>
-            Analiza tu sitio y descubre qué tan bien puede ser indexado, entendido y citado por ChatGPT, Perplexity y Google AI.
+          <p style={{ fontSize: 16, color: '#9ca3af', margin: '0 0 32px', lineHeight: 1.6, maxWidth: 520, marginLeft: 'auto', marginRight: 'auto' }}>
+            Analiza tu sitio y descubre qué tan bien puede ser indexado, entendido y citado por <strong style={{ color: '#e5e7eb' }}>ChatGPT, Perplexity y Google AI</strong>.
           </p>
 
           {/* Form */}
@@ -493,12 +742,32 @@ export default function Home() {
               {appState === 'running' ? 'Analizando…' : 'Auditar →'}
             </button>
           </form>
+          {appState === 'idle' && (
+            <div style={{ marginTop: 16, fontSize: 12, color: '#4b5563' }}>
+              Sin registro · Sin tarjeta · Resultado en ~30 segundos
+            </div>
+          )}
         </div>
       </div>
 
       {/* Main content */}
-      <div style={{ maxWidth: 960, margin: '32px auto', padding: '0 16px' }}>
-        {appState === 'idle' && <CheckPreview />}
+      <div style={{ maxWidth: 960, margin: '40px auto', padding: '0 16px' }}>
+        {appState === 'idle' && (
+          <>
+            <WhyItMatters />
+            <HowItWorks />
+            <CheckPreview />
+            <WhatYouGet />
+            <CtaBanner
+              onSubmit={startAudit}
+              url={url}
+              setUrl={setUrl}
+              maxPages={maxPages}
+              setMaxPages={setMaxPages}
+              running={false}
+            />
+          </>
+        )}
         {appState === 'running' && <ProgressFeed events={progress} />}
         {appState === 'error' && (
           <div style={{ background: '#fff5f5', border: '1px solid #fca5a5', borderRadius: 8, padding: 20, marginBottom: 24 }}>
