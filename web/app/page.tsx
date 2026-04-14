@@ -713,12 +713,26 @@ export default function Home() {
     setProgress([])
     setAudit(null)
     setErrorMsg('')
+    setUrl('')
   }
 
   return (
     <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
       {/* Header */}
-      <div style={{ background: '#111827', color: 'white', padding: appState === 'idle' ? '60px 16px 48px' : '40px 16px 32px' }}>
+      <div style={{ background: '#111827', color: 'white', padding: appState === 'idle' ? '60px 16px 48px' : '40px 16px 32px', position: 'relative' }}>
+        {/* Badge de auditorías restantes */}
+        <div style={{ position: 'absolute', top: 16, right: 20, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{
+            background: remaining <= 1 ? '#7f1d1d' : remaining <= 2 ? '#78350f' : '#14532d',
+            border: `1px solid ${remaining <= 1 ? '#dc2626' : remaining <= 2 ? '#d97706' : '#16a34a'}`,
+            borderRadius: 20, padding: '5px 12px', display: 'flex', alignItems: 'center', gap: 6,
+          }}>
+            <span style={{ fontSize: 15, fontWeight: 800, color: 'white' }}>{remaining}</span>
+            <span style={{ fontSize: 11, color: '#d1d5db', fontWeight: 500 }}>
+              {remaining === 1 ? 'auditoría' : 'auditorías'} restante{remaining !== 1 ? 's' : ''}
+            </span>
+          </div>
+        </div>
         <div style={{ maxWidth: 720, margin: '0 auto', textAlign: 'center' }}>
           <div style={{ fontSize: 12, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '.12em', marginBottom: 10 }}>
             GEO · Generative Engine Optimization
@@ -773,11 +787,6 @@ export default function Home() {
           {appState === 'idle' && remaining === 0 && (
             <div style={{ marginTop: 16, padding: '10px 16px', background: '#1f2937', borderRadius: 8, border: '1px solid #7f1d1d', display: 'inline-block' }}>
               <span style={{ fontSize: 13, color: '#f87171' }}>Has alcanzado el límite de auditorías. Contacta al administrador para continuar.</span>
-            </div>
-          )}
-          {appState === 'idle' && remaining > 0 && (
-            <div style={{ marginTop: 16, fontSize: 12, color: '#4b5563' }}>
-              {remaining} auditoría{remaining !== 1 ? 's' : ''} disponible{remaining !== 1 ? 's' : ''}
             </div>
           )}
         </div>
