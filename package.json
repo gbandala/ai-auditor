@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "description": "AI Readability Auditor — audita dominios y genera reporte HTML con score de legibilidad para LLMs",
   "type": "module",
+  "packageManager": "pnpm@10.33.0",
+  "pnpm": {
+    "onlyBuiltDependencies": []
+  },
   "bin": {
     "ai-auditor": "./auditor.ts"
   },
