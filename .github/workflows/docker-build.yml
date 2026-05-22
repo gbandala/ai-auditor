@@ -1,0 +1,131 @@
+name: Build & Deploy
+
+on:
+  push:
+    branches: [main]
+
+env:
+  IMAGE: ghcr.io/${{ github.repository }}
+
+jobs:
+  # ── 1. Pre-deploy: typecheck ──────────────────────────────────────────────
+  pre-deploy:
+    name: Pre-deploy (typecheck)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+          package_json_file: web/package.json
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: web/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+  # ── 2. Build & push Docker image ─────────────────────────────────────────
+  build-and-push:
+    name: Build & push image
+    needs: pre-deploy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: ./web
+          push: true
+          tags: ${{ env.IMAGE }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ── 3. Deploy to VPS ──────────────────────────────────────────────────────
+  deploy:
+    name: Deploy to VPS
+    needs: build-and-push
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            docker pull ghcr.io/${{ github.repository }}:latest
+            docker stop ai-auditor 2>/dev/null || true
+            docker rm   ai-auditor 2>/dev/null || true
+            docker run -d \
+              --name ai-auditor \
+              --restart unless-stopped \
+              --network dokploy-network \
+              --dns 8.8.8.8 \
+              --dns 8.8.4.4 \
+              -e NODE_ENV=production \
+              -e PORT=3000 \
+              --label "traefik.enable=true" \
+              --label "traefik.http.routers.ai-auditor.rule=Host(\`auditor.clariifica.com\`)" \
+              --label "traefik.http.routers.ai-auditor.entrypoints=websecure" \
+              --label "traefik.http.routers.ai-auditor.tls.certresolver=letsencrypt" \
+              --label "traefik.http.services.ai-auditor.loadbalancer.server.port=3000" \
+              --env-file /etc/ai-auditor.env \
+              ghcr.io/${{ github.repository }}:latest
+
+  # ── 4. Post-deploy: smoke test ────────────────────────────────────────────
+  post-deploy:
+    name: Post-deploy (smoke test)
+    needs: deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Wait for VPS ready
+        run: |
+          for i in $(seq 1 18); do
+            status=$(curl -s -o /dev/null -w "%{http_code}" https://auditor.clariifica.com)
+            if [ "$status" = "200" ] || [ "$status" = "307" ] || [ "$status" = "302" ]; then
+              echo "App ready after $((i * 10))s (HTTP $status)"
+              exit 0
+            fi
+            echo "Attempt $i/18: HTTP $status — retrying in 10s..."
+            sleep 10
+          done
+          echo "App not ready after 3 minutes"
+          exit 1
+
+      - name: Smoke test — homepage responde
+        run: |
+          status=$(curl -s -o /dev/null -w "%{http_code}" -L https://auditor.clariifica.com)
+          echo "Homepage status: $status"
+          if [ "$status" != "200" ]; then
+            echo "FAIL: expected 200, got $status"
+            exit 1
+          fi
