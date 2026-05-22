@@ -131,20 +131,21 @@ ai-auditor/
 ## Instalación (CLI)
 
 ```bash
-npm install
+# Desde la raíz del proyecto
+pnpm install
 ```
 
 ### Uso CLI
 
 ```bash
 # Auditar un dominio
-npm run audit -- https://ejemplo.com
+pnpm run audit -- https://ejemplo.com
 
 # Limitar páginas auditadas
-npm run audit -- https://ejemplo.com --pages 5
+pnpm run audit -- https://ejemplo.com --pages 5
 
 # Sitios con SSL inválido o autofirmado
-npm run audit -- https://sitio.com --no-verify
+pnpm run audit -- https://sitio.com --no-verify
 ```
 
 Genera `audit-report-<dominio>-<fecha>.html` en el directorio actual.  
@@ -158,9 +159,9 @@ Abre en Chrome → `Ctrl+P` → Guardar como PDF.
 
 ```bash
 cd web
-npm install
+pnpm install
 cp .env.local.example .env.local   # completar con tus credenciales
-npm run dev                         # http://localhost:3000
+pnpm dev                            # http://localhost:3000
 ```
 
 ### Variables de entorno requeridas
@@ -199,23 +200,61 @@ UPDATE authorized_emails SET audit_count = 0 WHERE email = 'usuario@empresa.com'
 
 ---
 
-## Deploy en Vercel
+## Deploy en VPS (producción actual)
 
-1. Importar repo en [vercel.com/new](https://vercel.com/new)
-2. Configurar **Root Directory → `web`**
-3. Agregar variables de entorno:
-   - `SUPABASE_URL`
-   - `SUPABASE_SERVICE_KEY`
-4. Deploy
+La interfaz web está desplegada en **auditor.clariifica.com** vía Docker + GitHub Actions + VPS Hetzner (CPX21, Ubuntu 24.04, Dokploy + Traefik).
 
-El `web/vercel.json` ya configura un timeout de 60s para la función de auditoría.
+### Pipeline CI/CD automático
+
+Cada `git push` a `main` dispara:
+
+```
+Pre-deploy (typecheck) → Build & push Docker → Deploy to VPS → Smoke test
+```
+
+Definido en `.github/workflows/docker-build.yml`. Build context: `./web`.
+
+### Secrets requeridos en GitHub Actions
+
+`Settings → Secrets → Actions` del repositorio:
+
+| Secret | Valor |
+|--------|-------|
+| `VPS_HOST` | IP del servidor |
+| `VPS_USER` | Usuario SSH |
+| `VPS_SSH_KEY` | Clave SSH privada |
+
+> No necesita `NEXT_PUBLIC_*` — todas las vars son server-side y van en el env file del servidor.
+
+### Variables de entorno en el servidor
+
+Crear `/etc/ai-auditor.env` con permisos `600`:
+
+```env
+NODE_ENV=production
+PORT=3000
+SUPABASE_URL=https://tu-proyecto.supabase.co
+SUPABASE_SERVICE_KEY=eyJ...
+```
+
+```bash
+scp ai-auditor.env user@vps:/home/user/ai-auditor.env
+ssh user@vps "sudo mv ~/ai-auditor.env /etc/ai-auditor.env && sudo chmod 600 /etc/ai-auditor.env"
+```
+
+### Notas de build (gotchas)
+
+- **`supabase.ts` usa fallback en build time.** `createClient` recibe placeholder values durante `next build` (cuando las vars no están disponibles). En runtime siempre habrá vars reales vía `--env-file`.
+- **`web/public/` debe existir aunque esté vacío.** El Dockerfile copia ese directorio — sin él, el build falla en la etapa final. El `.gitkeep` lo mantiene en el repo.
+- **Lockfile debe generarse con versiones exactas.** El `package.json` usa versiones pinneadas (sin `^`). Si se agregan deps con rangos, regenerar con `pnpm install` antes de commitear.
+- **`--dns 8.8.8.8` en `docker run`.** Containers en `dokploy-network` no resuelven DNS externo por defecto. El workflow ya lo incluye.
 
 ---
 
 ## Tests
 
 ```bash
-npm test
+pnpm test
 ```
 
 36 tests unitarios cubriendo los 7 módulos de checks.

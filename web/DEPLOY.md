@@ -1,26 +1,56 @@
-# Despliegue en VPS (Dockploy + Traefik)
+# Deploy — auditor.clariifica.com
 
-## Cambios ya aplicados
-- `output: 'standalone'` en `next.config.js`
-- `Dockerfile` multi-stage
-- `.dockerignore`
-- Header `X-Accel-Buffering: no` en la ruta SSE `/api/audit` (para que Traefik no bufferice el stream)
+## Estado actual
 
-## Checklist antes del primer deploy
+✅ Desplegado en producción vía Docker + GitHub Actions + VPS Hetzner.
 
-### 1. Dockploy — Environment Variables
-No hay vars `NEXT_PUBLIC_*`, todas son de runtime:
+Pipeline: `.github/workflows/docker-build.yml`  
+Build context: `./web` (este directorio)  
+URL: https://auditor.clariifica.com
 
-| Variable | Notas |
-|---|---|
-| `SUPABASE_URL` | Dashboard → Settings → API |
-| `SUPABASE_SERVICE_KEY` | Dashboard → Settings → API → service_role |
+## Secrets de GitHub Actions requeridos
 
-### 2. Dockploy — General
-- [ ] Build context: directorio `web/` del repo
-- [ ] Puerto interno: `3000`
+`github.com/gbandala/ai-auditor` → Settings → Secrets → Actions:
+
+| Secret | Valor |
+|--------|-------|
+| `VPS_HOST` | IP del servidor |
+| `VPS_USER` | Usuario SSH |
+| `VPS_SSH_KEY` | Clave SSH privada |
+
+## Variables de entorno en el servidor
+
+`/etc/ai-auditor.env` (chmod 600):
+
+```env
+NODE_ENV=production
+PORT=3000
+SUPABASE_URL=https://<project-ref>.supabase.co
+SUPABASE_SERVICE_KEY=<service_role_key>
+```
+
+## Docker run (referencia)
+
+El workflow ejecuta automáticamente:
+
+```bash
+docker run -d \
+  --name ai-auditor \
+  --restart unless-stopped \
+  --network dokploy-network \
+  --dns 8.8.8.8 --dns 8.8.4.4 \
+  -e NODE_ENV=production -e PORT=3000 \
+  --label "traefik.enable=true" \
+  --label "traefik.http.routers.ai-auditor.rule=Host(\`auditor.clariifica.com\`)" \
+  --label "traefik.http.routers.ai-auditor.entrypoints=websecure" \
+  --label "traefik.http.routers.ai-auditor.tls.certresolver=letsencrypt" \
+  --label "traefik.http.services.ai-auditor.loadbalancer.server.port=3000" \
+  --env-file /etc/ai-auditor.env \
+  ghcr.io/gbandala/ai-auditor:latest
+```
 
 ## Migración futura a Postgres en VPS
+
 Cuando se abandone Supabase, el único archivo a tocar es `web/lib/supabase.ts`:
 swapear `createClient` de `@supabase/supabase-js` por `postgres.js` o `pg`
 apuntando a la instancia Postgres del VPS.
